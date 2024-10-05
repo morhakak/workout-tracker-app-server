@@ -90,6 +90,70 @@ WorkoutSchema.pre("save", async function (next) {
   next();
 });
 
+// WorkoutSchema.pre("findOneAndUpdate", async function (next) {
+//   const update = this.getUpdate();
+//   const exercises = update.exercises;
+
+//   if (exercises && exercises.length > 0) {
+//     let totalVolume = 0;
+
+//     for (let i = 0; i < exercises.length; i++) {
+//       const exercise = exercises[i];
+//       let exerciseVolume = 0;
+
+//       // Create an array to hold the sets for this session
+//       const sessionSets = [];
+
+//       // Iterate over each set and calculate its volume
+//       exercise.sets.forEach((set) => {
+//         if (set) {
+//           const setVolume = set.reps * set.weight;
+//           exerciseVolume += setVolume;
+
+//           // Push the individual set's data to the sessionSets array
+//           sessionSets.push({
+//             reps: set.reps,
+//             weight: set.weight,
+//             createdDate: new Date(), // Record the time of this set
+//           });
+//         }
+//       });
+
+//       exercise.volume = exerciseVolume;
+//       totalVolume += exercise.volume;
+
+//       const workout = await this.model.findOne(this.getQuery());
+
+//       // Create the session object with the sets array
+//       const newSession = {
+//         sets: sessionSets, // Store the sets with varying reps/weight
+//         createdDate: new Date(),
+//         volume: totalVolume,
+//         workout: {
+//           workoutId: workout._id, // Reference the workout's ObjectId
+//           workoutName: workout.name, // Store the workout name
+//         },
+//       };
+
+//       console.log(`Updating exercise history for ${exercise.name}`);
+//       console.log(`Workout id ${workout._id}`);
+//       console.log(`Workout name ${workout.name}`);
+
+//       // Update or create the exercise history for the user
+//       await ExerciseHistory.findOneAndUpdate(
+//         { exerciseId: exercise.name, userId: update.user },
+//         { $push: { sessions: newSession } }, // Push the new session with detailed sets
+//         { new: true, upsert: true }
+//       );
+//     }
+
+//     // Update the total volume for the workout
+//     update.volume = totalVolume;
+//   }
+
+//   next();
+// });
+
 WorkoutSchema.pre("findOneAndUpdate", async function (next) {
   const update = this.getUpdate();
   const exercises = update.exercises;
@@ -124,27 +188,59 @@ WorkoutSchema.pre("findOneAndUpdate", async function (next) {
 
       const workout = await this.model.findOne(this.getQuery());
 
-      // Create the session object with the sets array
-      const newSession = {
-        sets: sessionSets, // Store the sets with varying reps/weight
-        createdDate: new Date(),
-        volume: totalVolume,
-        workout: {
-          workoutId: workout._id, // Reference the workout's ObjectId
-          workoutName: workout.name, // Store the workout name
-        },
-      };
+      // Find the exercise history for this exercise and user
+      const existingExerciseHistory = await ExerciseHistory.findOne({
+        exerciseId: exercise.name,
+        userId: update.user,
+      });
 
-      console.log(`Updating exercise history for ${exercise.name}`);
-      console.log(`Workout id ${workout._id}`);
-      console.log(`Workout name ${workout.name}`);
+      if (existingExerciseHistory) {
+        // Check if a session for this workout already exists
+        const existingSessionIndex = existingExerciseHistory.sessions.findIndex(
+          (session) => session.workout.workoutId.equals(workout._id)
+        );
 
-      // Update or create the exercise history for the user
-      await ExerciseHistory.findOneAndUpdate(
-        { exerciseId: exercise.name, userId: update.user },
-        { $push: { sessions: newSession } }, // Push the new session with detailed sets
-        { new: true, upsert: true }
-      );
+        if (existingSessionIndex > -1) {
+          // Update the existing session with new sets and volume
+          existingExerciseHistory.sessions[existingSessionIndex].sets =
+            sessionSets;
+          existingExerciseHistory.sessions[existingSessionIndex].volume =
+            exerciseVolume;
+          existingExerciseHistory.sessions[existingSessionIndex].createdDate =
+            new Date();
+        } else {
+          // If no session for this workout exists, create a new session
+          existingExerciseHistory.sessions.push({
+            sets: sessionSets,
+            createdDate: new Date(),
+            volume: exerciseVolume,
+            workout: {
+              workoutId: workout._id, // Reference the workout's ObjectId
+              workoutName: workout.name, // Store the workout name
+            },
+          });
+        }
+
+        // Save the updated exercise history
+        await existingExerciseHistory.save();
+      } else {
+        // If no exercise history exists, create a new record
+        const newSession = {
+          sets: sessionSets, // Store the sets with varying reps/weight
+          createdDate: new Date(),
+          volume: exerciseVolume,
+          workout: {
+            workoutId: workout._id, // Reference the workout's ObjectId
+            workoutName: workout.name, // Store the workout name
+          },
+        };
+
+        await ExerciseHistory.findOneAndUpdate(
+          { exerciseId: exercise.name, userId: update.user },
+          { $push: { sessions: newSession } },
+          { new: true, upsert: true }
+        );
+      }
     }
 
     // Update the total volume for the workout
