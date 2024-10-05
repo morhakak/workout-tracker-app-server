@@ -47,6 +47,28 @@ WorkoutSchema.pre("findOneAndUpdate", async function (next) {
   const update = this.getUpdate();
   const exercises = update.exercises;
 
+  const workout = await this.model.findOne(this.getQuery());
+
+  const oldExercises = workout.exercises.map((e) => e.name);
+  const updatedExercises = update.exercises?.map((e) => e.name) || [];
+
+  const removedExercises = oldExercises.filter(
+    (exerciseName) => !updatedExercises.includes(exerciseName)
+  );
+
+  if (removedExercises.length > 0) {
+    for (const exerciseName of removedExercises) {
+      await ExerciseHistory.findOneAndUpdate(
+        { exerciseId: exerciseName, userId: workout.user },
+        { $pull: { sessions: { workout: { workoutId: workout._id } } } }
+      );
+
+      console.log(
+        `Deleted session for removed exercise: ${exerciseName} in workout: ${workout.name}`
+      );
+    }
+  }
+
   if (exercises && exercises.length > 0) {
     let totalVolume = 0;
 
@@ -70,8 +92,6 @@ WorkoutSchema.pre("findOneAndUpdate", async function (next) {
 
       exercise.volume = exerciseVolume;
       totalVolume += exercise.volume;
-
-      const workout = await this.model.findOne(this.getQuery());
 
       const existingExerciseHistory = await ExerciseHistory.findOne({
         exerciseId: exercise.name,

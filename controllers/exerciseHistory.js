@@ -28,7 +28,10 @@ export const getExerciseHistory = asyncHandler(async (req, res, next) => {
   const exercise = await ExerciseHistory.findById(req.params.id);
   if (!exercise)
     return next(
-      new ErrorResponse(`Exercise not found with ID of ${req.params.id}`, 404)
+      new ErrorResponse(
+        `Exercise history not found with ID of ${req.params.id}`,
+        404
+      )
     );
   res.status(200).json({ success: true, data: exercise });
 });
