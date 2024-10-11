@@ -50,6 +50,34 @@ const ExerciseHistorySchema = new mongoose.Schema({
       },
     },
   ],
+  oneRepMax: {
+    value: { type: Number },
+    workout: {
+      workoutId: { type: mongoose.Schema.ObjectId, ref: "Workout" },
+      workoutName: { type: String },
+    },
+  },
+  maxWeight: {
+    value: { type: Number },
+    workout: {
+      workoutId: { type: mongoose.Schema.ObjectId, ref: "Workout" },
+      workoutName: { type: String },
+    },
+  },
+  maxReps: {
+    value: { type: Number },
+    workout: {
+      workoutId: { type: mongoose.Schema.ObjectId, ref: "Workout" },
+      workoutName: { type: String },
+    },
+  },
+  maxVolume: {
+    value: { type: Number },
+    workout: {
+      workoutId: { type: mongoose.Schema.ObjectId, ref: "Workout" },
+      workoutName: { type: String },
+    },
+  },
 });
 
 const ExerciseHistory = mongoose.model(

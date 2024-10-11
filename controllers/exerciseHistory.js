@@ -7,7 +7,9 @@ import ExerciseHistory from "../models/ExerciseHistory.js";
 // @access  Private (Authenticated users)
 export const getExercisesHistory = asyncHandler(async (req, res, next) => {
   const userId = req.user.id;
-  const exerciseHistory = await ExerciseHistory.find({ userId });
+  const exerciseHistory = await ExerciseHistory.find({ userId }).sort({
+    "sessions.createdDate": -1,
+  });
 
   if (!exerciseHistory || exerciseHistory.length === 0) {
     return next(
@@ -33,5 +35,10 @@ export const getExerciseHistory = asyncHandler(async (req, res, next) => {
         404
       )
     );
+
+  exercise.sessions.sort(
+    (a, b) => new Date(b.createdDate) - new Date(a.createdDate)
+  );
+
   res.status(200).json({ success: true, data: exercise });
 });
