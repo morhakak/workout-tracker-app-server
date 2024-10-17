@@ -39,7 +39,6 @@ export const getWorkout = asyncHandler(async (req, res, next) => {
 });
 
 export const createWorkout = asyncHandler(async (req, res, next) => {
-  console.log("Workout data:", req.body); // Log the workout data sent from the frontend
   req.body.user = req.user.id;
   const workout = new Workout(req.body);
   const savedWorkout = await workout.save();
@@ -60,22 +59,6 @@ export const updateWorkout = asyncHandler(async (req, res, next) => {
       401
     );
   }
-
-  // Calculate volumes for each exercise
-  // req.body.exercises.forEach((exercise) => {
-  //   let exerciseVolume = 0;
-  //   exercise.sets.forEach((set) => {
-  //     exerciseVolume += set.reps * set.weight;
-  //   });
-  //   exercise.volume = exerciseVolume; // Add calculated volume to each exercise
-  // });
-
-  // Calculate total workout volume
-  // const totalVolume = req.body.exercises.reduce(
-  //   (acc, exercise) => acc + exercise.volume,
-  //   0
-  // );
-  // req.body.volume = totalVolume; // Set the total workout volume
 
   workout = await Workout.findOneAndUpdate({ _id: req.params.id }, req.body, {
     new: true,
