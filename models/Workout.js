@@ -58,14 +58,18 @@ WorkoutSchema.pre("findOneAndUpdate", async function (next) {
 
   if (removedExercises.length > 0) {
     for (const exerciseName of removedExercises) {
-      await ExerciseHistory.findOneAndUpdate(
+      const existingExerciseHistory = await ExerciseHistory.findOneAndUpdate(
         { exerciseId: exerciseName, userId: workout.user },
-        { $pull: { sessions: { workout: { workoutId: workout._id } } } }
+        { $pull: { sessions: { "workout.workoutId": workout._id } } },
+        { new: true }
       );
 
-      console.log(
-        `Deleted session for removed exercise: ${exerciseName} in workout: ${workout.name}`
-      );
+      if (existingExerciseHistory) {
+        await existingExerciseHistory.recalculateMaxValues();
+        await existingExerciseHistory.save();
+      }
+
+      console.log("Exercise history after update: ", existingExerciseHistory);
     }
   }
 
@@ -122,6 +126,7 @@ WorkoutSchema.pre("findOneAndUpdate", async function (next) {
           });
         }
 
+        await existingExerciseHistory.recalculateMaxValues();
         await existingExerciseHistory.save();
       } else {
         const newSession = {
@@ -134,11 +139,14 @@ WorkoutSchema.pre("findOneAndUpdate", async function (next) {
           },
         };
 
-        await ExerciseHistory.findOneAndUpdate(
-          { exerciseId: exercise.name, userId: update.user },
-          { $push: { sessions: newSession } },
-          { new: true, upsert: true }
-        );
+        const newExerciseHistory = new ExerciseHistory({
+          exerciseId: exercise.name,
+          userId: update.user,
+          sessions: [newSession],
+        });
+
+        await newExerciseHistory.recalculateMaxValues();
+        await newExerciseHistory.save();
       }
     }
 
@@ -151,11 +159,18 @@ WorkoutSchema.pre("findOneAndUpdate", async function (next) {
 WorkoutSchema.post("deleteOne", { document: true }, async function (doc) {
   const workoutId = doc._id;
 
-  const result = await ExerciseHistory.updateMany(
-    { "sessions.workout.workoutId": workoutId },
-    { $pull: { sessions: { "workout.workoutId": workoutId } } },
-    { multi: true }
-  );
+  const exerciseHistories = await ExerciseHistory.find({
+    "sessions.workout.workoutId": workoutId,
+  });
+
+  for (let history of exerciseHistories) {
+    history.sessions = history.sessions.filter(
+      (session) => !session.workout.workoutId.equals(workoutId)
+    );
+
+    await history.recalculateMaxValues();
+    await history.save();
+  }
 });
 
 const Workout = mongoose.model("Workout", WorkoutSchema);
