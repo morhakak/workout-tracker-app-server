@@ -5,6 +5,7 @@ import workoutRoutes from "./routes/workoutRoutes.js";
 import authRoutes from "./routes/authRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
 import exerciseHistoryRoutes from "./routes/exerciseHistoryRoutes.js";
+import measurementsRoutes from "./routes/measurementsRoutes.js";
 import connectDb from "./config/db.js";
 import colors from "colors";
 import errorHandler from "./middlewares/error.js";
@@ -41,6 +42,7 @@ app.use("/api/v1/workouts", workoutRoutes);
 app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/users", userRoutes);
 app.use("/api/v1/exercise-history", exerciseHistoryRoutes);
+app.use("/api/v1/measurements", measurementsRoutes);
 
 app.use(errorHandler);
 
