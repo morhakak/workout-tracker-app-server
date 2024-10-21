@@ -13,9 +13,13 @@ export const getWeight = asyncHandler(async (req, res) => {
 
   const { weight } = user.measurements;
 
+  const sortedWeight = weight.sort(
+    (a, b) => new Date(b.date) - new Date(a.date)
+  );
+
   res.status(200).json({
     success: true,
-    data: weight,
+    data: sortedWeight,
   });
 });
 
@@ -84,8 +88,6 @@ export const updateHeight = asyncHandler(async (req, res) => {
 });
 
 export const addCircumference = asyncHandler(async (req, res) => {
-  console.log("this is the req.body", req.body);
-
   const {
     neck,
     shoulders,
