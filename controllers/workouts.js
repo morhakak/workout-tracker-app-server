@@ -3,6 +3,32 @@ import ErrorResponse from "../utils/errorResponse.js";
 import asyncHandler from "../middlewares/async.js";
 import Workout from "../models/Workout.js";
 
+// export const getWorkouts = asyncHandler(async (req, res, next) => {
+//   let token;
+
+//   if (
+//     req.headers.authorization &&
+//     req.headers.authorization.startsWith("Bearer")
+//   ) {
+//     token = req.headers.authorization.split(" ")[1];
+//   }
+
+//   // else if (req.cookies.token) {
+//   //   token = req.cookies.token;
+//   // }
+
+//   if (!token) {
+//     console.log("theres is no token");
+//     return next(new ErrorResponse("Not authorized to access this route", 401));
+//   }
+
+//   const decoded = jwt.verify(token, process.env.JWT_SECRET);
+//   const workouts = await Workout.find({ user: decoded.id });
+//   res
+//     .status(200)
+//     .json({ success: true, data: workouts, count: workouts.length });
+// });
+
 export const getWorkouts = asyncHandler(async (req, res, next) => {
   let token;
 
@@ -13,20 +39,31 @@ export const getWorkouts = asyncHandler(async (req, res, next) => {
     token = req.headers.authorization.split(" ")[1];
   }
 
-  // else if (req.cookies.token) {
-  //   token = req.cookies.token;
-  // }
-
   if (!token) {
-    console.log("theres is no token");
+    console.log("there is no token");
     return next(new ErrorResponse("Not authorized to access this route", 401));
   }
 
   const decoded = jwt.verify(token, process.env.JWT_SECRET);
-  const workouts = await Workout.find({ user: decoded.id });
-  res
-    .status(200)
-    .json({ success: true, data: workouts, count: workouts.length });
+
+  const page = parseInt(req.query.page) || 1;
+  const limit = parseInt(req.query.limit) || 10;
+  const skip = (page - 1) * limit;
+
+  const totalWorkouts = await Workout.countDocuments({ user: decoded.id });
+
+  const workouts = await Workout.find({ user: decoded.id })
+    .skip(skip)
+    .limit(limit);
+
+  res.status(200).json({
+    success: true,
+    data: workouts,
+    count: workouts.length,
+    totalWorkouts,
+    page,
+    totalPages: Math.ceil(totalWorkouts / limit),
+  });
 });
 
 export const getWorkout = asyncHandler(async (req, res, next) => {
