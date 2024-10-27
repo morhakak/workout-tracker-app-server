@@ -3,6 +3,7 @@ import ErrorResponse from "../utils/errorResponse.js";
 import asyncHandler from "../middlewares/async.js";
 import User from "../models/User.js";
 import { sendEmail } from "../utils/sendEmail.js";
+import Activity from "../models/Activity.js";
 
 export const register = asyncHandler(async (req, res, next) => {
   const { name, email, password, role } = req.body;
@@ -44,6 +45,13 @@ export const login = asyncHandler(async (req, res, next) => {
     return next(new ErrorResponse("Invalid credentials", 401));
   }
 
+  const activity = new Activity({
+    userId: user._id,
+    activityType: "user",
+    activityValue: `Logged-in`,
+  });
+  await activity.save();
+
   sendTokenResponse(user, 200, res);
 });
 
@@ -61,6 +69,14 @@ export const logout = asyncHandler(async (req, res, next) => {
     expires: new Date(Date.now() + 10 * 1000),
     httpOnly: true,
   });
+  const user = await User.findById(req.user.id);
+
+  const activity = new Activity({
+    userId: user._id,
+    activityType: "user",
+    activityValue: `Logged-out`,
+  });
+  await activity.save();
 
   res.status(200).json({
     success: true,
@@ -79,6 +95,13 @@ export const updateDetails = asyncHandler(async (req, res, next) => {
     runValidators: true,
   });
 
+  const activity = new Activity({
+    userId: user._id,
+    activityType: "user",
+    activityValue: `Update profile info`,
+  });
+  await activity.save();
+
   res.status(200).json({
     success: true,
     data: user,
@@ -94,6 +117,13 @@ export const updatePassword = asyncHandler(async (req, res, next) => {
 
   user.password = req.body.newPassword;
   await user.save();
+
+  const activity = new Activity({
+    userId: user._id,
+    activityType: "user",
+    activityValue: `Update password`,
+  });
+  await activity.save();
 
   sendTokenResponse(user, 200, res);
 });

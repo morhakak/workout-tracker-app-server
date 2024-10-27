@@ -2,6 +2,8 @@ import jwt from "jsonwebtoken";
 import ErrorResponse from "../utils/errorResponse.js";
 import asyncHandler from "../middlewares/async.js";
 import Workout from "../models/Workout.js";
+import User from "../models/User.js";
+import Activity from "../models/Activity.js";
 
 // export const getWorkouts = asyncHandler(async (req, res, next) => {
 //   let token;
@@ -79,6 +81,16 @@ export const createWorkout = asyncHandler(async (req, res, next) => {
   req.body.user = req.user.id;
   const workout = new Workout(req.body);
   const savedWorkout = await workout.save();
+
+  const user = await User.findById(req.user.id);
+
+  const activity = new Activity({
+    userId: user._id,
+    activityType: "workout",
+    activityValue: `Create workout - ${workout.name}`,
+  });
+  await activity.save();
+
   res.status(201).json({ success: true, data: savedWorkout });
 });
 
@@ -102,6 +114,15 @@ export const updateWorkout = asyncHandler(async (req, res, next) => {
     runValidators: true,
   });
 
+  const user = await User.findById(req.user.id);
+
+  const activity = new Activity({
+    userId: user._id,
+    activityType: "workout",
+    activityValue: `Update workout - ${workout.name}`,
+  });
+  await activity.save();
+
   res.status(200).json({ success: true, data: workout });
 });
 
@@ -120,6 +141,16 @@ export const deleteWorkout = asyncHandler(async (req, res, next) => {
   }
 
   await workout.deleteOne();
+
+  const user = await User.findById(req.user.id);
+
+  const activity = new Activity({
+    userId: user._id,
+    activityType: "workout",
+    activityValue: `Delete workout - ${workout.name}`,
+  });
+  await activity.save();
+
   res.status(204).json({ success: true, data: {} });
 });
 

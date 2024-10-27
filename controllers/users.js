@@ -1,6 +1,7 @@
 import ErrorResponse from "../utils/errorResponse.js";
 import asyncHandler from "../middlewares/async.js";
 import User from "../models/User.js";
+import Activity from "../models/Activity.js";
 
 export const getUsers = asyncHandler(async (req, res, next) => {
   const users = await User.find();
@@ -21,6 +22,24 @@ export const getUser = asyncHandler(async (req, res, next) => {
   res.status(200).json({
     success: true,
     data: user,
+  });
+});
+
+export const getUserActivities = asyncHandler(async (req, res, next) => {
+  console.log("Received request to get user activities"); // Check if request is reaching here
+
+  const userId = req.user?._id; // Check if user ID is set
+  if (!userId) {
+    console.log("User ID not found on request object"); // Add this log to check
+    return next(new ErrorResponse("User not authenticated", 401));
+  }
+
+  const activities = await Activity.find({ userId }).sort({ date: -1 });
+  console.log("********* activities get called **************", activities);
+
+  res.status(200).json({
+    success: true,
+    data: activities,
   });
 });
 
