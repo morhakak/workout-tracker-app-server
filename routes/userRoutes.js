@@ -6,7 +6,6 @@ import {
   updateUser,
   deleteUser,
 } from "../controllers/users.js";
-import User from "../models/User.js";
 import { protect, authorize } from "../middlewares/auth.js";
 
 const router = experess.Router({ mergeParams: true });
