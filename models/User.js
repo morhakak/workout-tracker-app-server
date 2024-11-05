@@ -34,12 +34,12 @@ const UserSchema = new mongoose.Schema({
   },
   measurements: {
     height: Number,
-    weight: [
-      {
-        value: Number,
-        date: { type: Date, default: Date.now },
-      },
-    ],
+    // weighings: [
+    //   {
+    //     weight: Number,
+    //     date: { type: Date, default: Date.now },
+    //   },
+    // ],
     circumference: [
       {
         neck: Number,

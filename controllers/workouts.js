@@ -144,6 +144,10 @@ export const deleteWorkout = asyncHandler(async (req, res, next) => {
 
   const user = await User.findById(req.user.id);
 
+  if (!user) {
+    return new ErrorResponse(`User ${req.user} was not found`, 404);
+  }
+
   const activity = new Activity({
     userId: user._id,
     activityType: "workout",
