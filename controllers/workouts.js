@@ -5,32 +5,6 @@ import Workout from "../models/Workout.js";
 import User from "../models/User.js";
 import Activity from "../models/Activity.js";
 
-// export const getWorkouts = asyncHandler(async (req, res, next) => {
-//   let token;
-
-//   if (
-//     req.headers.authorization &&
-//     req.headers.authorization.startsWith("Bearer")
-//   ) {
-//     token = req.headers.authorization.split(" ")[1];
-//   }
-
-//   // else if (req.cookies.token) {
-//   //   token = req.cookies.token;
-//   // }
-
-//   if (!token) {
-//     console.log("theres is no token");
-//     return next(new ErrorResponse("Not authorized to access this route", 401));
-//   }
-
-//   const decoded = jwt.verify(token, process.env.JWT_SECRET);
-//   const workouts = await Workout.find({ user: decoded.id });
-//   res
-//     .status(200)
-//     .json({ success: true, data: workouts, count: workouts.length });
-// });
-
 export const getWorkouts = asyncHandler(async (req, res, next) => {
   let token;
 
@@ -55,16 +29,19 @@ export const getWorkouts = asyncHandler(async (req, res, next) => {
   const totalWorkouts = await Workout.countDocuments({ user: decoded.id });
 
   const workouts = await Workout.find({ user: decoded.id })
+    .sort({ date: -1 })
     .skip(skip)
     .limit(limit);
 
   res.status(200).json({
     success: true,
     data: workouts,
-    count: workouts.length,
-    totalWorkouts,
-    page,
-    totalPages: Math.ceil(totalWorkouts / limit),
+    meta: {
+      count: workouts.length,
+      totalWorkouts,
+      page,
+      totalPages: Math.ceil(totalWorkouts / limit),
+    },
   });
 });
 
