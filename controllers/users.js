@@ -26,20 +26,31 @@ export const getUser = asyncHandler(async (req, res, next) => {
 });
 
 export const getUserActivities = asyncHandler(async (req, res, next) => {
-  console.log("Received request to get user activities"); // Check if request is reaching here
+  const userId = req.user?._id;
 
-  const userId = req.user?._id; // Check if user ID is set
+  const page = parseInt(req.query.page, 10) || 1;
+  const limit = parseInt(req.query.limit, 10) || 10;
+  const skip = (page - 1) * limit;
+
   if (!userId) {
-    console.log("User ID not found on request object"); // Add this log to check
     return next(new ErrorResponse("User not authenticated", 401));
   }
+  const activities = await Activity.find({ userId })
+    .sort({ date: -1 })
+    .skip(skip)
+    .limit(limit);
 
-  const activities = await Activity.find({ userId }).sort({ date: -1 });
-  console.log("********* activities get called **************", activities);
+  const totalactivities = await Activity.countDocuments({ userId });
 
   res.status(200).json({
     success: true,
     data: activities,
+    meta: {
+      total: totalactivities,
+      page,
+      limit,
+      totalPages: Math.ceil(totalactivities / limit),
+    },
   });
 });
 

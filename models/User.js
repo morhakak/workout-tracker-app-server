@@ -15,6 +15,9 @@ const UserSchema = new mongoose.Schema({
     match: [/^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/, "Please add a valid email"],
     dropDups: true,
   },
+  phone: {
+    type: String,
+  },
   role: {
     type: String,
     enum: ["user", "admin"],
@@ -32,30 +35,24 @@ const UserSchema = new mongoose.Schema({
     type: Date,
     default: Date.now,
   },
-  measurements: {
-    height: Number,
-    // weighings: [
-    //   {
-    //     weight: Number,
-    //     date: { type: Date, default: Date.now },
-    //   },
-    // ],
-    circumference: [
-      {
-        neck: Number,
-        shoulders: Number,
-        chest: Number,
-        rightArm: Number,
-        leftArm: Number,
-        waist: Number,
-        rightThigh: Number,
-        leftThigh: Number,
-        rightCalf: Number,
-        leftCalf: Number,
-        date: { type: Date, default: Date.now },
-      },
-    ],
-  },
+  // measurements: {
+  //   height: Number,
+  //   circumference: [
+  //     {
+  //       neck: Number,
+  //       shoulders: Number,
+  //       chest: Number,
+  //       rightArm: Number,
+  //       leftArm: Number,
+  //       waist: Number,
+  //       rightThigh: Number,
+  //       leftThigh: Number,
+  //       rightCalf: Number,
+  //       leftCalf: Number,
+  //       date: { type: Date, default: Date.now },
+  //     },
+  //   ],
+  // },
 });
 
 UserSchema.pre("save", async function (next) {
