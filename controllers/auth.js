@@ -109,13 +109,15 @@ export const updateDetails = asyncHandler(async (req, res, next) => {
 });
 
 export const updatePassword = asyncHandler(async (req, res, next) => {
+  const { currentPassword, newPassword } = req.body;
+
   const user = await User.findById(req.user.id).select("+password");
 
-  if (!(await user.matchPassword(req.body.currentPassword))) {
+  if (!(await user.matchPassword(currentPassword))) {
     return next(new ErrorResponse("Password is incorrect", 401));
   }
 
-  user.password = req.body.newPassword;
+  user.password = newPassword;
   await user.save();
 
   const activity = new Activity({
@@ -190,6 +192,31 @@ export const resetPassword = asyncHandler(async (req, res, next) => {
   await user.save();
 
   sendTokenResponse(user, 200, res);
+});
+
+export const verifyPassword = asyncHandler(async (req, res, next) => {
+  const { password } = req.body;
+
+  if (!password) {
+    return next(new ErrorResponse("Please provide a password", 400));
+  }
+
+  const user = await User.findById(req.user.id).select("+password");
+
+  if (!user) {
+    return next(new ErrorResponse("User not found", 404));
+  }
+
+  const isMatch = await user.matchPassword(password);
+
+  if (!isMatch) {
+    return next(new ErrorResponse("Invalid password", 401));
+  }
+
+  res.status(200).json({
+    success: true,
+    message: "Password verified successfully",
+  });
 });
 
 const sendTokenResponse = (user, statusCode, res) => {

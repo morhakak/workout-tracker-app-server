@@ -18,15 +18,12 @@ export const protect = asyncHandler(async (req, res, next) => {
   // }
 
   if (!token) {
-    console.log("theres is no token");
     return next(new ErrorResponse("Not authorized to access this route", 401));
   }
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
     req.user = await User.findById(decoded.id);
-    console.log(req.user._id);
 
     next();
   } catch (error) {
