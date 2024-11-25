@@ -10,6 +10,7 @@ import {
   addCircumference,
   getCircumferences,
   deleteCircumference,
+  updateCircumference,
 } from "../controllers/circumferences.js";
 import { protect, authorize } from "../middlewares/auth.js";
 const router = express.Router();
@@ -36,5 +37,7 @@ router
 
 router
   .route("/circumferences/:id")
-  .delete(protect, authorize("user", "admin"), deleteCircumference);
+  .delete(protect, authorize("user", "admin"), deleteCircumference)
+  .put(protect, authorize("user", "admin"), updateCircumference);
+
 export default router;

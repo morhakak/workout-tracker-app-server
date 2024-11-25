@@ -7,11 +7,26 @@ import asyncHandler from "../middlewares/async.js";
 export const getWeighings = asyncHandler(async (req, res) => {
   const userId = req.user.id;
 
-  const weighings = await Weighing.find({ userId }).sort({ date: -1 });
+  const page = parseInt(req.query.page, 10) || 1;
+  const limit = parseInt(req.query.limit, 10) || 5;
+  const skip = (page - 1) * limit;
+
+  const weighings = await Weighing.find({ userId })
+    .sort({ date: -1 })
+    .skip(skip)
+    .limit(limit);
+
+  const totalWeighings = await Weighing.countDocuments({ userId });
 
   res.status(200).json({
     success: true,
     data: weighings,
+    meta: {
+      total: totalWeighings,
+      page,
+      limit,
+      totalPages: Math.ceil(totalWeighings / limit),
+    },
   });
 });
 
@@ -33,7 +48,7 @@ export const addWeighing = asyncHandler(async (req, res) => {
   const activity = new Activity({
     userId,
     activityType: "weighing",
-    activityValue: `Add weight - ${weight} ${
+    activityValue: `Add weighing - ${weight} ${
       unit == "imperial" ? "lbs" : "kg"
     }`,
   });
@@ -76,15 +91,14 @@ export const deleteWeighing = asyncHandler(async (req, res) => {
   const { id } = req.params;
   const userId = req.user.id;
 
-  const weighing = await Weighing.findOne({ _id: id, userId });
+  const weighing = await Weighing.findOneAndDelete({ _id: id, userId });
 
   if (!weighing) {
-    return res
-      .status(404)
-      .json({ success: false, error: "Weighing entry not found" });
+    return new ErrorResponse(
+      `Weighing entry not found or unauthorized access`,
+      404
+    );
   }
-
-  await Weighing.findByIdAndDelete(id);
 
   const activity = new Activity({
     userId,
