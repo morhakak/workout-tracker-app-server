@@ -1,4 +1,3 @@
-import jwt from "jsonwebtoken";
 import ErrorResponse from "../utils/errorResponse.js";
 import asyncHandler from "../middlewares/async.js";
 import Workout from "../models/Workout.js";
@@ -6,29 +5,13 @@ import User from "../models/User.js";
 import Activity from "../models/Activity.js";
 
 export const getWorkouts = asyncHandler(async (req, res, next) => {
-  let token;
-
-  if (
-    req.headers.authorization &&
-    req.headers.authorization.startsWith("Bearer")
-  ) {
-    token = req.headers.authorization.split(" ")[1];
-  }
-
-  if (!token) {
-    console.log("there is no token");
-    return next(new ErrorResponse("Not authorized to access this route", 401));
-  }
-
-  const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
   const page = parseInt(req.query.page) || 1;
   const limit = parseInt(req.query.limit) || 10;
   const skip = (page - 1) * limit;
 
-  const totalWorkouts = await Workout.countDocuments({ user: decoded.id });
+  const totalWorkouts = await Workout.countDocuments({ user: req.user.id });
 
-  const workouts = await Workout.find({ user: decoded.id })
+  const workouts = await Workout.find({ user: req.user.id })
     .sort({ date: -1 })
     .skip(skip)
     .limit(limit);

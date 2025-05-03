@@ -13,12 +13,12 @@ const router = express.Router();
 
 router
   .route("/")
-  .get(getWorkouts)
+  .get(protect, getWorkouts)
   .post(protect, authorize("user", "admin"), createWorkout);
 
 router
   .route("/:id")
-  .get(getWorkout)
+  .get(protect, getWorkout)
   .put(protect, authorize("user", "admin"), updateWorkout)
   .delete(protect, authorize("user", "admin"), deleteWorkout);
 
